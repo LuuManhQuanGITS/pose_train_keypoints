@@ -22,7 +22,7 @@ mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
 # --- Video source ---
-video_path = "1103426139-preview.mp4"  # đổi video của bạn0
+video_path = "Screen_Recording_20250910_133430.mp4"  # đổi video của bạn0
 output_csv = "dataset/keypoints_video.csv"
 
 # --- Hàm chuẩn hóa keypoints ---
@@ -71,7 +71,20 @@ with open(output_csv, "a", newline="") as f:
             mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 
             # Hiển thị frame để gán nhãn
-            cv2.imshow("Label Pose Frame", frame)
+            height, width = frame.shape[:2]
+    
+               # Giới hạn chiều cao tối đa là 1000
+            max_height = 1000
+
+            if height > max_height:
+                # Tính tỉ lệ co
+                scale = max_height / height
+                new_width = int(width * scale)
+                new_height = int(height * scale)
+                frame_resized = cv2.resize(frame, (new_width, new_height))
+            else:
+                frame_resized = frame    
+            cv2.imshow("Label Pose Frame", frame_resized)
             print(f"\nFrame: {frame_idx}")
             for k, v in LABELS.items():
                 print(f"{k}: {v}")
