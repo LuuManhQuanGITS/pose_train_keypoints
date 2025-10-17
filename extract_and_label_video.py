@@ -17,12 +17,12 @@ LABELS = {
     9: "STRIKING_WITH_HAND_OR_KNEE"
 }
 
-# --- Mediapipe Pose setup ---
+# --- Mediapipe Pose setup ---00
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
 # --- Video source ---
-video_path = "1071362284-preview.mp4"  # đổi video của bạn
+video_path = "1103426139-preview.mp4"  # đổi video của bạn0
 output_csv = "dataset/keypoints_video.csv"
 
 # --- Hàm chuẩn hóa keypoints ---
