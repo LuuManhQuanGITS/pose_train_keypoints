@@ -29,7 +29,7 @@ def normalize_keypoints(landmarks):
     return np.array(norm_points).reshape(1, -1)
 
 # --- Video capture ---
-video_path = "Screen_Recording_20250910_133430.mp4"  # hoặc 0 để dùng webcam
+video_path = "1055851697-preview.mp4"  # hoặc 0 để dùng webcam
 cap = cv2.VideoCapture(video_path)
 
 while cap.isOpened():

@@ -1,7 +1,10 @@
 import cv2
+import joblib
 import mediapipe as mp
 import csv
 import os
+
+import numpy as np
 
 # --- Danh sách nhãn ---
 LABELS = {
@@ -21,8 +24,12 @@ LABELS = {
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
+
+model = joblib.load("pose_classifier_video.pkl")
+label_encoder = joblib.load("label_encoder_video.pkl")
+
 # --- Video source ---
-video_path = "Screen_Recording_20250910_133430.mp4"  # đổi video của bạn0
+video_path = "1055851697-preview.mp4"  # đổi video của bạn0
 output_csv = "dataset/keypoints_video.csv"
 
 # --- Hàm chuẩn hóa keypoints ---
@@ -39,6 +46,22 @@ def normalize_keypoints(landmarks):
         norm_y = (lm.y - min_y) / height if height > 0 else 0
         norm_points.extend([norm_x, norm_y])
     return norm_points
+
+
+# --- Hàm normalize keypoints ---
+def normalize_keypoints_predict(landmarks):
+    xs = [lm.x for lm in landmarks]
+    ys = [lm.y for lm in landmarks]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    width = max_x - min_x
+    height = max_y - min_y
+    norm_points = [] 
+    for lm in landmarks:
+        norm_x = (lm.x - min_x) / width if width > 0 else 0
+        norm_y = (lm.y - min_y) / height if height > 0 else 0
+        norm_points.extend([norm_x, norm_y])
+    return np.array(norm_points).reshape(1, -1)
 
 # --- Tạo CSV nếu chưa có ---
 num_keypoints = 33  # MediaPipe Pose
@@ -69,6 +92,14 @@ with open(output_csv, "a", newline="") as f:
         if result.pose_landmarks:
             # Vẽ pose
             mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+            
+            keypoints_norm = normalize_keypoints_predict(result.pose_landmarks.landmark)
+            pred_encoded = model.predict(keypoints_norm)
+            pred_label = label_encoder.inverse_transform(pred_encoded)[0]
+            cv2.putText(
+            frame, f"Predicted: {pred_label}",
+            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2
+        )
 
             # Hiển thị frame để gán nhãn
             height, width = frame.shape[:2]
