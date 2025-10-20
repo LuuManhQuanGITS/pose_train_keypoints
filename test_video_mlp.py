@@ -47,7 +47,7 @@ def predict_tflite(keypoints):
     return pred_label, confidence
 
 # --- Video/Camera ---
-video_path = "Screen_Recording_20250910_133430.mp4"  # hoặc 0 cho webcam
+video_path = "1051956901-preview.mp4"  # hoặc 0 cho webcam
 cap = cv2.VideoCapture(video_path)
 
 print("🎥 Nhấn 'q' để thoát")

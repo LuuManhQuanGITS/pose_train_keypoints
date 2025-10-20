@@ -4,7 +4,7 @@ import numpy as np
 import joblib
 
 # --- Load model & encoder ---
-model = joblib.load("pose_classifier.pkl")
+model = joblib.load("pose_classifier_video.pkl")
 label_encoder = joblib.load("label_encoder_video.pkl")
 print("✅ Model & encoder loaded successfully!\n")
 
@@ -29,7 +29,7 @@ def normalize_keypoints(landmarks):
     return np.array(norm_points).reshape(1, -1)
 
 # --- Video capture ---
-video_path = "3840704143-preview.mp4"  # hoặc 0 để dùng webcam
+video_path = "1087184039-preview.mp4"  # hoặc 0 để dùng webcam
 cap = cv2.VideoCapture(video_path)
 
 while cap.isOpened():
