@@ -4,10 +4,14 @@ import numpy as np
 import tensorflow as tf
 import joblib
 
+# --- Cấu hình ---
+video_path = "dung_thang.png"  # hoặc 0 cho webcam
+confidence_threshold = 0.8
+max_height_display = 1000
+
 # --- Load TFLite model ---
 interpreter = tf.lite.Interpreter(model_path="pose_classifier_dense.tflite")
 interpreter.allocate_tensors()
-
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
@@ -17,11 +21,11 @@ label_encoder = joblib.load("label_encoder_dense.pkl")
 # --- MediaPipe setup ---
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
-pose = mp_pose.Pose(static_image_mode=False, 
+pose = mp_pose.Pose(static_image_mode=False,
                     min_detection_confidence=0.5,
                     min_tracking_confidence=0.5)
 
-# --- Normalize keypoints ---
+# --- Normalize keypoints theo bounding box ---
 def normalize_keypoints(landmarks):
     xs = [lm.x for lm in landmarks]
     ys = [lm.y for lm in landmarks]
@@ -43,56 +47,68 @@ def predict_tflite(keypoints):
     output = interpreter.get_tensor(output_details[0]['index'])
     pred_idx = np.argmax(output[0])
     confidence = output[0][pred_idx]
+    labels = label_encoder.classes_.tolist()
     pred_label = label_encoder.classes_[pred_idx]
     return pred_label, confidence
 
-# --- Video/Camera ---
-video_path = "1051956901-preview.mp4"  # hoặc 0 cho webcam
+# --- Khởi tạo VideoCapture ---
 cap = cv2.VideoCapture(video_path)
+is_image = False
+if isinstance(video_path, str) and video_path.lower().endswith(('.jpg','.png','.jpeg')):
+    is_image = True
 
 print("🎥 Nhấn 'q' để thoát")
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
-    
+while True:
+    if is_image:
+        frame = cv2.imread(video_path)
+        if frame is None:
+            print("❌ Không đọc được ảnh")
+            break
+    else:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     result = pose.process(frame_rgb)
-    
+
     if result.pose_landmarks:
         # Vẽ skeleton
         mp_drawing.draw_landmarks(
-            frame, 
-            result.pose_landmarks, 
+            frame,
+            result.pose_landmarks,
             mp_pose.POSE_CONNECTIONS,
             mp_drawing.DrawingSpec(color=(0,255,0), thickness=2, circle_radius=2),
             mp_drawing.DrawingSpec(color=(0,0,255), thickness=2)
         )
-        
+
         # Predict
         keypoints = normalize_keypoints(result.pose_landmarks.landmark)
         pred_label, confidence = predict_tflite(keypoints)
-        
-        # Hiển thị kết quả
-        if confidence > 0.8:
+
+        # Hiển thị kết quả nếu confidence đủ cao
+        if confidence > confidence_threshold:
             text = f"{pred_label}: {confidence*100:.1f}%"
-            cv2.putText(frame, text, (10, 40), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+            cv2.putText(frame, text, (10, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
     else:
         cv2.putText(frame, "No pose detected", (10, 40),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    
-    # Resize để hiển thị
+
+    # Resize frame để hiển thị
     height, width = frame.shape[:2]
-    max_height = 1000
-    if height > max_height:
-        scale = max_height / height
+    if height > max_height_display:
+        scale = max_height_display / height
         frame = cv2.resize(frame, (int(width * scale), int(height * scale)))
-    
+
     cv2.imshow("Pose Classification - TFLite", frame)
-    
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    if is_image:
+        cv2.waitKey(0)
         break
 
 cap.release()

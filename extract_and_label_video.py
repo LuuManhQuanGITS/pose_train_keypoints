@@ -26,10 +26,10 @@ mp_drawing = mp.solutions.drawing_utils
 
 
 model = joblib.load("pose_classifier_video.pkl")
-label_encoder = joblib.load("label_encoder_video.pkl")
+label_encoder = joblib.load("label_encoder_video.pkl")  
 
 # --- Video source ---33
-video_path = "1072627070-preview.mp4"  # đổi video của bạn0
+video_path = "5259701-uhd_2160_4096_30fps.mp4"  # đổi video của bạn0
 output_csv = "dataset/keypoints_video.csv"
 
 # --- Hàm chuẩn hóa keypoints ---
